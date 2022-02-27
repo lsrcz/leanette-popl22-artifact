@@ -12,11 +12,7 @@
 
 ;; easy syntax rules to write sql queries
 (define-syntax SELECT 
-  (syntax-rules () [(SELECT v FROM q WHERE f) (query-select v q f)]
-                   [(SELECT v FROM q WHERE f GROUP-BY g HAVING h) (query-aggr-general q f g v h)]))
-
-(define-syntax-rule (SELECT-DISTINCT v FROM q WHERE f) (query-select-distinct v q f))
-;; group by syntax, values in v can refer to aggregation values
+  (syntax-rules () [(SELECT v FROM q WHERE f) (query-select v q f)]))
 
 (define-syntax-rule (UNION-ALL q1 q2) (query-union-all q1 q2))
 (define-syntax-rule (TABLE-UNION-ALL t1 t2) (union-all t1 t2))
@@ -42,29 +38,6 @@
 ; old implementation
 ;(define-syntax-rule (SELECT-GROUP q gb-fields aggrf target) (query-aggr q gb-fields aggrf target))
 
-; denote to the new interface
-(define-syntax-rule (SELECT-GROUP q gb-fields aggrf target) 
-                    (SELECT (append (map (lambda (x) (val-column-ref x)) gb-fields) 
-                                    (list (val-uexpr aggrf (VAL target)))) 
-                     FROM q 
-                     WHERE (TRUE)
-                     GROUP-BY gb-fields
-                     HAVING (TRUE)))
-
-;; group by but with an alternative implementation
-(define-syntax-rule
-  (SELECT-GROUP-SUBQ q gb-fields aggrf target)
-  (SELECT-DISTINCT 
-    (append (map (lambda (x) (VAL x)) gb-fields)
-            (list (VAL (AGGR-SUBQ aggrf (SELECT 
-                                          (VALS (string-append "tmp." target))
-                                          FROM (AS (SELECT (append (map (lambda (x) (VAL x)) gb-fields) (list (VAL target))) FROM q WHERE (TRUE)) 
-                                                   ["tmp" (append gb-fields (list target))])
-                                          WHERE (foldl (lambda (x y) (AND x y)) (TRUE) 
-                                                       (map (lambda (z) (BINOP z = (string-append "tmp." z))) gb-fields)))))))
-    FROM q
-    WHERE (TRUE)))
-
 ;;;;;;;;;;;;;;;;;;; value-level syntax macros ;;;;;;;;;;;;;;;;;;;
 
 (define-syntax-rule (VAL v)
@@ -74,20 +47,20 @@
                       [(int? v) (val-const v)]
                       [else v]))
 
-(define-syntax-rule (VAL-BINOP v1 op v2) (val-bexpr op (VAL v1) (VAL v2)))
-(define-syntax-rule (VAL-UNOP op val) (val-uexpr op (VAL val)))
-(define-syntax-rule (AGGR-SUBQ aggr-fun q) (val-aggr-subq aggr-fun q))
+;(define-syntax-rule (VAL-BINOP v1 op v2) (val-bexpr op (VAL v1) (VAL v2)))
+;(define-syntax-rule (VAL-UNOP op val) (val-uexpr op (VAL val)))
+;(define-syntax-rule (AGGR-SUBQ aggr-fun q) (val-aggr-subq aggr-fun q))
 (define (VALS . v) (map (lambda (x) (VAL x)) v))
 
 ;;;;;;;;;;;;;;;;;; filter-level syntax macros ;;;;;;;;;;;;;;;;;;;
 
-(define-syntax-rule (EXISTS q) (filter-exists q))
+;(define-syntax-rule (EXISTS q) (filter-exists q))
 (define-syntax-rule (TRUE) (filter-true))
 (define-syntax-rule (FALSE) (filter-false))
 
 ; f can be uninterpreted functions
 ; f should be of type int->int->...->int->bool
-(define (NARY-OP f . args) (filter-nary-op f (map (lambda (x) (VAL x)) args)))
+; (define (NARY-OP f . args) (filter-nary-op f (map (lambda (x) (VAL x)) args)))
 
 (define-syntax-rule (BINOP v1 op v2) (filter-binop op (VAL v1) (VAL v2)))
 (define-syntax-rule (OR f1 f2) (filter-disj f1 f2))

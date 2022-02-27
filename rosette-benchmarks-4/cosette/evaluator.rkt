@@ -6,26 +6,6 @@
 
 (define sqlnull "sqlnull")
 
-;;;;;;;;;;;;;;;;;; library aggregation functions ;;;;;;;;;;;;;;;;;
-;; input to these functions:
-;;    [(v1 . m1), (v2 . m2), ..., (vn . mn)]
-;; output is the aggregation result of the list
-(define (aggr-count l) (foldl + 0 (map cdr l)))
-(define (aggr-sum l) (foldl + 0 (map (lambda (x) (* (car x) (cdr x))) l)))
-(define (aggr-max l) (foldl (lambda (v r) (if (> v r) v r)) -inf.0 (map (lambda (x) (car x)) l)))
-(define (aggr-min l) (foldl (lambda (v r) (if (< v r) v r)) +inf.0 (map (lambda (x) (car x)) l)))
-(define (aggr-count-distinct l) 
-  (cond [(eq? l '()) 0]
-        [else (+ 1 (aggr-count-distinct (filter (lambda (x) (not (eq? (car l) x))) (cdr l))))]))
-
-; function used to determine if a function is aggregation function
-(define (is-aggr-func? f) 
-  (or (eq? f aggr-count) 
-      (eq? f aggr-sum) 
-      (eq? f aggr-max) 
-      (eq? f aggr-min) 
-      (eq? f aggr-count-distinct)))
-
 ;; rawTable -> rawTable -> rawTable
 (define (xproduct-raw a b)
   (let ([imr (cartes-prod a b)])
@@ -71,92 +51,6 @@
     [(> (car l1) (car l2)) 1]
     [(< (car l1) (car l2)) -1]
     [else (dict-order-compare (cdr l1) (cdr l2))]))
-
-; perform aggregation on a table :table
-; Arguments:
-;     table: the table to be aggregated, which contains only table-content but not schema
-;     aggr-field-indices: indices of the fields to be aggregated, reprented in a list
-;     raw-aggr-fun: the aggregation function to be used; it takes in a list of pairs [(v1 . mul1), ..., (vn . muln)] and
-;                returns a single aggregation value
-;     target-index: the target field to be used in aggregation
-(define (aggr-raw table aggr-field-indices raw-aggr-fun target-index)
-  (cond 
-    [(equal? '() table) '()]
-    [else 
-      (let* ([row (car table)]
-             [aggr-key-vals (map (lambda (i) (list-ref (car row) i)) aggr-field-indices)]
-             [target-val (list-ref (car row) target-index)])
-        (cons
-          (let ([same-val-rows 
-                  (map (lambda (r) (cons (list-ref (car r) target-index) (cdr r)))
-                       (filter (lambda (r) (equal? aggr-key-vals
-                                                   (map (lambda (i) (list-ref (car r) i))
-                                                        aggr-field-indices)))
-                               table))])
-            (cons (append aggr-key-vals (list (raw-aggr-fun same-val-rows))) 
-                  (if (table-content-empty? same-val-rows) 0 1)))
-          (aggr-raw (filter (lambda (r) (not (equal? aggr-key-vals
-                                                     (map (lambda (i) (list-ref (car r) i))
-                                                          aggr-field-indices))))
-                            (cdr table))
-                    aggr-field-indices
-                    raw-aggr-fun
-                    target-index)))]))
-
-; perform aggregation on a table :table, result as follows:
-;   we segment a table into a list of tables and each table is the result of a group
-; each cell contain a list of tuples, specifying each value appear in the group and the number of times it appears
-; Arguments:
-;     table: the table to be aggregated, which contains only table-content but not schema
-;     group-by-indices: indices of the fields to be aggregated, reprented in a list
-;     target-indice: the target fields to be used in aggregation 
-;                    (we only collect them without actually perform any aggregation)
-(define (group-by-raw table group-by-indices)
-  (cond 
-    [(equal? '() table) '()]
-    [else 
-      (let* ([row (car table)]
-             [target-indices (range (length (car row)))]
-             [gb-key-vals (map (lambda (i) (list-ref (car row) i)) group-by-indices)])
-        (cons
-          (let* ([same-val-rows 
-                   (map (lambda (r) 
-                          (cons (map (lambda (idx) (cons (list-ref (car r) idx) (cdr r))) target-indices) (cdr r)))
-                        (filter (lambda (r) (equal? gb-key-vals
-                                                    (map (lambda (i) (list-ref (car r) i)) group-by-indices)))
-                                table))]
-                 ; claculate multiplicty of the group
-                 [multiplicity (foldl (lambda (v r) (if (> v 0) 1 r)) 0 (map (lambda (r) (cdr r)) same-val-rows))]
-                 [col-store-val-seg (transpose (map (lambda (r) (car r)) same-val-rows))])
-            (cons col-store-val-seg multiplicity))
-                  ; the multiplicity here indicates the multiplicity of the table 
-                  ; after applying aggregation function instead of multiplicity of the rows
-          (group-by-raw 
-            (filter (lambda (r) 
-                      (not (equal? gb-key-vals (map (lambda (i) (list-ref (car r) i)) group-by-indices)))) 
-                    (cdr table))
-            group-by-indices)))]))
-
-; group a table statically based on bv index list
-(define (static-group-by-raw table group-bv-list)
-  (cond 
-    [(equal? '() group-bv-list) '()]
-    [else 
-      (let* ([bv (car group-bv-list)]
-             [same-val-rows (foldl (lambda (r b l) (if (eq? b 1) (append l (list r)) l)) '() table bv)]
-             [multiplicity (foldl (lambda (v r) (if (> v 0) 1 r)) 0 (map (lambda (r) (cdr r)) same-val-rows))]
-             [col-store-val-seg (transpose (map (lambda (r) (map (lambda (v) (cons v (cdr r))) (car r))) same-val-rows))]
-             )
-        (cons (cons col-store-val-seg multiplicity)
-              (static-group-by-raw table (cdr group-bv-list))))]))
-        
-;;; transpose a 2d list (from ij -> ji, e.g.)
-(define (transpose list2d)
-  (cond 
-    [(equal? '() list2d) '()]
-    [else (map (lambda (i) (map (lambda (r) (list-ref r i)) list2d))
-               (range (length (car list2d))))]))
-
 
 (define (dedup table)
   (cond
@@ -277,21 +171,6 @@
         (union-all-raw 
           content12
           (map (lambda (r) (cons (append (car r) null-cols) (cdr r))) extra-rows))))))
-
-; extend each row in the table with extended-element-list,
-; e.g. each row will be (row ++ eel)
-(define (extend-each-row table extra-elements)
-  (map (lambda (r) (cons (append (car r) extra-elements) (cdr r))) table))
-
-(define (cross-prod table1 table2)
-  (let ([cross-single (lambda (p1)
-                        (map (lambda (p2)
-                               (let ([r1 (car p1)]
-                                     [r2 (car p2)]
-                                     [cnt (* (cdr p1) (cdr p2))])
-                                 (cons (append r1 r2) cnt)))
-                             table2))])
-    (foldr append '() (map cross-single table1))))
 
 ;; calculate whether a list is distinct of not
 (define (list-distinct? l)

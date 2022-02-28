@@ -3,6 +3,8 @@
 (provide
     echo-union
 
+    harvest
+    make!
     new-boolean!
     new-enum!
     nonterminals!
@@ -27,6 +29,24 @@
 
 (require "bounded.rkt")
 ;(current-bound! 20)
+
+(define (harvest syntax)
+  (define (terminal-nodes tree)
+    (if (pair? tree)
+      (append (terminal-nodes (car tree))
+              (terminal-nodes (cdr tree)))
+      (list tree)))
+  (remove-duplicates
+    (filter
+      (lambda (x)
+        (and (not (null? x))
+             (not (member x (map car syntax)))))
+      (terminal-nodes syntax))))
+
+(define (make! stx node depth)
+    (define t** (binary-tree! depth))
+    (assert (syntax-matches? stx node t**))
+    t**)
 
 ; Display a symbolic value in a large tree form
 (define (echo-union u)

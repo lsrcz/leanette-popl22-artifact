@@ -46,25 +46,7 @@
 
 ;(nonterminals! '(die))
 
-(define (harvest syntax)
-  (define (terminal-nodes tree)
-    (if (pair? tree)
-      (append (terminal-nodes (car tree))
-              (terminal-nodes (cdr tree)))
-      (list tree)))
-  (remove-duplicates
-    (filter
-      (lambda (x)
-        (and (not (null? x))
-             (not (member x (map car syntax)))))
-      (terminal-nodes syntax))))
-
 (nonterminals! (harvest dot-stx))
-
-(define (make! node depth)
-    (define t** (binary-tree! depth))
-    (assert (syntax-matches? dot-stx node t**))
-    t**)
 
 (define (freshen! x)
   (define x* (binary-tree! 6))
@@ -342,7 +324,7 @@
 
 (time (begin
 (displayln "Building tree...")
-(define t* (time (make! 'term 10)))
+(define t* (time (make! dot-stx 'term 10)))
 (displayln "Built tree...")
 
 (displayln "Checking type...")

@@ -11,7 +11,9 @@
 (define BENCHMARKS
   (hash "bagpipe"     "bagpipe/setups/textbook/run.rkt"
         "bonsai"      "bonsai/nanoscala.rkt"
+        "bonsai-let-poly"      "bonsai/let-poly.rkt"
         "cosette"     "cosette/cidr-benchmarks/oracle-12c-bug.rkt"
+        "cosette-optimized"     "cosette-optimized/cidr-benchmarks/oracle-12c-bug.rkt"
         "ferrite"     "ferrite/rename.rkt"
         "fluidics"    "fluidics/ex2.rkt"
         "greenthumb"  "greenthumb/GA/output/0/driver-0.rkt"

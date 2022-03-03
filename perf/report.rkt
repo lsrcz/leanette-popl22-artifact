@@ -24,12 +24,12 @@
         [else (string digit)])))))
 
 (define (time-fmt x)
-  (if (< x 1000)
+  (if (< x 1)
       "<\\,1"
-      (add-comma (~r (round (/ x 1000)) #:precision 0))))
+      (add-comma (~r x))))
 
 (define (term-fmt x)
-  (add-comma (~r (round (/ x 1000)) #:precision 0)))
+  (add-comma (~r x)))
 
 (define replacement (hash "Greenthumb" "GreenThumb"
                           "Ifcl" "IFCL"
@@ -107,24 +107,3 @@
             (* diff-cpu geo-cpu)
             (* diff-solve geo-solve)
             (* diff-term geo-term))))
-
-(printf "\n\n\n")
-
-(print-table
- (list
-  (list "(Total) Best" "Worst" "Avg"
-        "(Eval) Best" "Worst" "Avg"
-        "(Solving) Best" "Worst" "Avg"
-        "(Terms) Best" "Worst" "Avg")
-  (list (sum-fmt min-real)
-        (sum-fmt max-real)
-        (sum-fmt (expt geo-real (/ 1 (length all-names))))
-        (sum-fmt min-cpu)
-        (sum-fmt max-cpu)
-        (sum-fmt (expt geo-cpu (/ 1 (length all-names))))
-        (sum-fmt min-solve)
-        (sum-fmt max-solve)
-        (sum-fmt (expt geo-solve (/ 1 (length all-names))))
-        (sum-fmt min-term)
-        (sum-fmt max-term)
-        (sum-fmt (expt geo-term (/ 1 (length all-names)))))))

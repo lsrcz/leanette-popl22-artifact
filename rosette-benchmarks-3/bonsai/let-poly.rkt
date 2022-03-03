@@ -1,5 +1,5 @@
 #lang rosette
-(output-smt #t)
+(output-smt #f)
 (require rosette/solver/smt/boolector (only-in rosette current-solver))
 (current-solver (boolector))
 ; Introduction

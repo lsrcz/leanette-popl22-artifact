@@ -9,25 +9,13 @@
 
 ; map from benchmark names to relative file paths
 (define BENCHMARKS
-  (hash "bagpipe"     "bagpipe/setups/textbook/run.rkt"
-        "bonsai"      "bonsai/nanoscala.rkt"
-        "bonsai-let-poly"      "bonsai/let-poly.rkt"
+  (hash "nanoscala"   "bonsai/nanoscala.rkt"
+        ;"letpoly"     "bonsai/let-poly.rkt"
         "cosette"     "cosette/cidr-benchmarks/oracle-12c-bug.rkt"
-        "cosette-optimized"     "cosette-optimized/cidr-benchmarks/oracle-12c-bug.rkt"
+        "cosette-1"   "cosette-optimized/cidr-benchmarks/oracle-12c-bug.rkt"
         "ferrite"     "ferrite/rename.rkt"
         "fluidics"    "fluidics/ex2.rkt"
-        "greenthumb"  "greenthumb/GA/output/0/driver-0.rkt"
-        "memsynth"    "memsynth/case-studies/synthesis/ppc/ppc0.rkt"
-        "neutrons"    "neutrons/filterWedgeProp.rkt"
-        "nonograms"   "nonograms/puzzle/src/run-batch-learn-rules.rkt"
-        "quivela"     "quivela/test-inc-arg.rkt"
-        "rtr"         "rtr/benchmarks/all.rkt"
-        "wallingford" "wallingford/tests/all-tests.rkt"
-        "frpsynth"    "frpsynth/paperbenchmarks/program1.rkt"
-        "swizzle"     "swizzle/ex2-conv1d.rkt"
-        "ifcl"        "ifcl/test.rkt"
-        "synthcl"     "synthcl/examples/sobelFilter/test.rkt"
-        "websynth"    "websynth/test/all-tests.rkt"))
+        "ifcl"        "ifcl/test.rkt"))
 
 ; groups of benchmarks
 (define GROUPS

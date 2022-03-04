@@ -1,7 +1,0 @@
-(current-bitwidth #f)
-(define (make_counter n)
-  (let ([counter n])
-    (return (lambda ()
-      (set! counter (+ counter 1))
-      (return counter)))))
-(define new-obj-id (make_counter 13829))

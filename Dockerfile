@@ -1,4 +1,4 @@
-FROM ubuntu:20.10
+FROM ubuntu:20.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG BOOLECTOR_VERSION=3.2.1
@@ -6,7 +6,6 @@ ARG Z3_VERSION=4.8.8
 ARG CVC4_VERSION=1.8
 
 WORKDIR /workspace
-
 RUN apt-get update && apt-get install -y \
     autoconf \
     automake \
@@ -26,6 +25,12 @@ RUN apt-get update && apt-get install -y \
     git \
     gperf \
     htop \
+    libffi-dev \
+    libgmp-dev \
+    libgmp10 \
+    libncurses-dev \
+    libncurses5 \
+    libtinfo5 \
     llvm \
     make \
     patchutils \
@@ -45,6 +50,11 @@ RUN apt-get update && apt-get install -y \
     wget \
     zlib1g-dev \
   && rm -rf /var/lib/apt/lists/*
+
+# Grisette
+RUN curl -sSL https://get.haskellstack.org/ | sh
+# RUN curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
+RUN apt update && apt install -y libpcre2-dev libpcre3-dev && rm -rf /var/lib/apt/lists/*
 
 # Racket
 RUN add-apt-repository -y ppa:plt/racket \
@@ -113,28 +123,65 @@ RUN wget https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh &
 RUN echo 'export PATH="$HOME/.elan/bin:$PATH"' >> /root/.bashrc
 
 # Download mathlib
-COPY lean /workspace/lean
-RUN /bin/bash -c "source ~/.profile && cd /workspace/lean && leanproject build"
+#COPY lean /workspace/lean
+#RUN /bin/bash -c "source ~/.profile && cd /workspace/lean && leanproject build"
 
-COPY jitterbug-benchmarks /workspace/jitterbug-benchmarks
+#COPY jitterbug-benchmarks /workspace/jitterbug-benchmarks
 
 # Serval
 
-RUN cd /workspace/jitterbug-benchmarks/jitterbug-rosette3/serval \
-  && raco cross --workspace /workspace/rosette-3 pkg install --auto -D
+#RUN cd /workspace/jitterbug-benchmarks/jitterbug-rosette3/serval \
+#  && raco cross --workspace /workspace/rosette-3 pkg install --auto -D
 
-RUN cd /workspace/jitterbug-benchmarks/jitterbug-rosette4/serval \
-  && raco cross --workspace /workspace/rosette-4 pkg install --auto -D
+#RUN cd /workspace/jitterbug-benchmarks/jitterbug-rosette4/serval \
+#  && raco cross --workspace /workspace/rosette-4 pkg install --auto -D
+
 
 # The rest
+RUN stack install --resolver lts-18.17 \
+  bytestring \
+  constraints \
+  deepseq \
+  either \
+  formatting \
+  generic-deriving \
+  hashable \
+  intern \
+  megaparsec \
+  monad-coroutine \
+  monad-memo \
+  mtl \
+  parser-combinators \
+  regex-base \
+  regex-pcre \
+  sbv \
+  template-haskell \
+  transformers \
+  unordered-containers \
+  vector-sized \
+  vector
+
+RUN stack install --resolver lts-18.17 \
+  array \
+  hashtables \
+  loch-th \
+  lens \
+  mmorph \
+  typerep-map \
+  th-lift-instances
+  
+COPY grisette-haskell /workspace/grisette-haskell
+RUN cd grisette-haskell \
+  && stack build \
+  && cd ..
 
 COPY README.md /workspace/README.md
-COPY diff-testing /workspace/diff-testing
+#COPY diff-testing /workspace/diff-testing
 COPY rosette-benchmarks-3 /workspace/rosette-benchmarks-3
 COPY rosette-benchmarks-4 /workspace/rosette-benchmarks-4
 COPY interface /workspace/interface
 COPY perf /workspace/perf
-COPY examples /workspace/examples
+#COPY examples /workspace/examples
 COPY .gitignore /workspace/.gitignore
 
 RUN git config --global user.name "Your Name"

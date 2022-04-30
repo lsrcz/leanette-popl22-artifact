@@ -10,7 +10,7 @@
 ; map from benchmark names to relative file paths
 (define BENCHMARKS
   (hash "nanoscala"   "bonsai/nanoscala.rkt"
-        ;"letpoly"     "bonsai/let-poly.rkt"
+        "letpoly"     "bonsai/let-poly.rkt"
         "cosette"     "cosette/cidr-benchmarks/oracle-12c-bug.rkt"
         "cosette-1"   "cosette-optimized/cidr-benchmarks/oracle-12c-bug.rkt"
         "ferrite"     "ferrite/rename.rkt"
@@ -56,15 +56,16 @@
         (printf "~a," bm)
         (flush-output))
       (printf "=== ~a ===\n" bm))
-  (define-values (cpu real gc term-count)
-    (for/fold ([cpus '()][reals '()][gcs '()][term-counts '()]) ([i (in-range iters)])
-      (define-values (cpu real gc the-term-count)
+  (define-values (cpu real solv term-count)
+    (for/fold ([cpus '()][reals '()][solvs '()][term-counts '()]) ([i (in-range iters)])
+      (define-values (cpu real _ the-term-count)
         (parameterize ([current-output-port (if verbose? (current-output-port) (open-output-nowhere))])
           (run-file (hash-ref BENCHMARKS bm))))
+      (define solv (- real cpu))
       (if csv?
-          (printf "~a,~a,~a,~a\n" cpu real gc the-term-count)
-          (printf "cpu time: ~v real time: ~v gc time: ~v term count: ~v\n" cpu real gc the-term-count))
-      (values (cons cpu cpus) (cons real reals) (cons gc gcs) (cons the-term-count term-counts))))
+          (printf "~a,~a,~a,~a\n" cpu real solv the-term-count)
+          (printf "cpu time: ~v real time: ~v solv time: ~v term count: ~v\n" cpu real solv the-term-count))
+      (values (cons cpu cpus) (cons real reals) (cons solv solvs) (cons the-term-count term-counts))))
   (when (not csv?)
     (printf "\n"))
   (when (and (not csv?) (> iters 1))
@@ -78,7 +79,7 @@
       (format "~a [~a, ~a]" (fmt μ) (fmt (- μ δ)) (fmt (+ μ δ))))
     (printf "cpu time: ~a\n" (mean+ci cpu))
     (printf "real time: ~a\n" (mean+ci real))
-    (printf "gc time: ~a\n" (mean+ci gc))
+    (printf "solv time: ~a\n" (mean+ci solv))
     (printf "term count: ~a\n" (mean+ci term-count))
     (printf "\n")))
 
@@ -131,6 +132,10 @@
            [else
             (error "unknown benchmark" s)])))
      (list "bm" "bm")))
+
+  (if csv?
+      (printf "subject,eval,total,solv,term\n")
+      (void))
 
   (for ([bm (remove-duplicates bms)])
     (run-benchmark bm #:csv? csv?

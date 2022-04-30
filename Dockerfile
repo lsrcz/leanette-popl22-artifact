@@ -106,52 +106,26 @@ RUN cd /workspace/rosette-4 \
   && git checkout 9fefa68ad171be497050230f7a8a65f62a99c5d9 \
   && raco cross --workspace /workspace/rosette-4 pkg install --auto -D
 
-RUN cp $CVC4 /workspace/rosette-3/rosette/bin \
-  && cp $BOOLECTOR /workspace/rosette-3/rosette/bin \
-  && cp $Z3 /workspace/rosette-3/rosette/bin \
-  && cp $CVC4 /workspace/rosette-4/rosette/bin \
-  && cp $BOOLECTOR /workspace/rosette-4/rosette/bin \
-  && cp $Z3 /workspace/rosette-4/rosette/bin
-
-# Lean
-RUN wget https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh && \
-    bash elan-init.sh -y && rm elan-init.sh && \
-    python3 -m pip install --system pipx && \
-    python3 -m pipx ensurepath && \
-    pipx install mathlibtools
-
-RUN echo 'export PATH="$HOME/.elan/bin:$PATH"' >> /root/.bashrc
-
-# Download mathlib
-#COPY lean /workspace/lean
-#RUN /bin/bash -c "source ~/.profile && cd /workspace/lean && leanproject build"
-
-#COPY jitterbug-benchmarks /workspace/jitterbug-benchmarks
-
-# Serval
-
-#RUN cd /workspace/jitterbug-benchmarks/jitterbug-rosette3/serval \
-#  && raco cross --workspace /workspace/rosette-3 pkg install --auto -D
-
-#RUN cd /workspace/jitterbug-benchmarks/jitterbug-rosette4/serval \
-#  && raco cross --workspace /workspace/rosette-4 pkg install --auto -D
-
+RUN rm -f /workspace/rosette-3/rosette/bin/* \
+  && rm -f /workspace/rosette-4/rosette/bin/* \
+  && ln -s $CVC4 /workspace/rosette-3/rosette/bin/cvc4 \
+  && ln -s $BOOLECTOR /workspace/rosette-3/rosette/bin/boolector \
+  && ln -s $Z3 /workspace/rosette-3/rosette/bin/z3 \
+  && ln -s $CVC4 /workspace/rosette-4/rosette/bin/cvc4 \
+  && ln -s $BOOLECTOR /workspace/rosette-4/rosette/bin/boolector \
+  && ln -s $Z3 /workspace/rosette-4/rosette/bin/z3
 
 # The rest
 RUN stack install --resolver lts-18.17 \
   bytestring \
   constraints \
   deepseq \
-  either \
-  formatting \
   generic-deriving \
   hashable \
   intern \
-  megaparsec \
   monad-coroutine \
   monad-memo \
   mtl \
-  parser-combinators \
   regex-base \
   regex-pcre \
   sbv \
@@ -159,19 +133,33 @@ RUN stack install --resolver lts-18.17 \
   transformers \
   unordered-containers \
   vector-sized \
-  vector
-
-RUN stack install --resolver lts-18.17 \
+  vector \
   array \
   hashtables \
   loch-th \
   lens \
   mmorph \
   typerep-map \
-  th-lift-instances
+  th-lift-instances \
+  hspec \
+  hspec-junit-formatter \
+  QuickCheck \
+  utf8-string \
+  megaparsec \
+  parser-combinators \
+  timeit \
+  clock \
+  formatting \
+  either \
+  text \
+  Glob
   
 COPY grisette-haskell /workspace/grisette-haskell
 RUN cd grisette-haskell \
+  && mkdir -p scripts/solvers \
+  && ln -s $CVC4 scripts/solvers/cvc4 \
+  && ln -s $BOOLECTOR scripts/solvers/boolector \
+  && ln -s $Z3 scripts/solvers/z3 \
   && stack build \
   && cd ..
 

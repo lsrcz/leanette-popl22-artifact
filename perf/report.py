@@ -167,8 +167,8 @@ def print_table4(grisette):
 
 if __name__ == '__main__':
     grisette = read_file('grisette.csv')
-    r3 = read_file('r2.csv')
     r3 = read_file('r3.csv')
     r4 = read_file('r4.csv')
+    print_table2(grisette, r3, r4)
     print_table3(grisette, r3, r4)
     print_table4(grisette)

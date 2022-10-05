@@ -1,3 +1,5 @@
+This is a repo adapted from https://github.com/uw-unsat/leanette-popl22-artifact for the evaluation of grisette.
+
 # "A formal foundation for symbolic evaluation with merging" Artifact
 
 This is the artifact for the POPL 2022 paper "A formal foundation for symbolic evaluation with merging".
